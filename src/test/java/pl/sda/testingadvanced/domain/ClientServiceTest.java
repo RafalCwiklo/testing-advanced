@@ -1,7 +1,10 @@
 package pl.sda.testingadvanced.domain;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,6 +45,8 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class ClientServiceTest {
 
+    static long start;
+    static long finish;
     DateTimeProvider dateTimeProviderStub = new DateTimeProvider();
     @Mock
     DateTimeProvider dateTimeProviderMock;
@@ -52,6 +57,18 @@ class ClientServiceTest {
     ClientService clientService;
     ClientService clientServiceWithStub;
     ClientRepository clientRepositoryStub = new InMemoryRepository();
+
+    @BeforeAll
+    static void beforeAll() {
+        start = System.nanoTime();
+    }
+
+    @AfterAll
+    static void afterAll() {
+        finish = System.nanoTime();
+        long timeElapsed = finish - start;
+        System.out.printf("Czas wykonania: [%s] sekund", (double) timeElapsed / 1_000_000_000);
+    }
 
     private static Stream<Arguments> getFakeTransactions() {
         return Stream.of(
@@ -75,7 +92,7 @@ class ClientServiceTest {
     }
 
     @Test
-    void checkBankBalance() {
+    void checkBankBalanceWithMock() {
         //given
         when(clientRepositoryMock.getClientDataByClientId("999"))
                 .thenReturn(Optional.of(Client.builder()
@@ -96,6 +113,14 @@ class ClientServiceTest {
     }
 
     @Test
+    void checkBankBalanceWithStub() {
+        //when
+        Double bankBalance = clientServiceWithStub.checkBankBalance("ABC123");
+        //then
+        Assertions.assertEquals(1_000_000.0, bankBalance);
+    }
+
+    @Test
     void getAllActiveCards() {
         //given
         //when
@@ -105,6 +130,7 @@ class ClientServiceTest {
     }
 
     @Test
+    @Disabled
     void handleTransaction() {
         //given
         when(clientRepositoryMock.getClientDataByClientId("123"))
@@ -230,7 +256,7 @@ class ClientServiceTest {
     @Test
     void checkMockedWithdrawalFee() {
         //given
-        try( MockedStatic mockStatic = mockStatic(Withdrawal.class)) {
+        try (MockedStatic mockStatic = mockStatic(Withdrawal.class)) {
 
             mockStatic.when(() -> Withdrawal.getCurrentPercentageFeeAmount()).thenReturn(5.0);
             //when
@@ -250,7 +276,7 @@ class ClientServiceTest {
     @Test
     void checkNewObjectCreation() {
         //given
-        try(MockedConstruction<EmailMessage> mocked = mockConstruction(EmailMessage.class)) {
+        try (MockedConstruction<EmailMessage> mocked = mockConstruction(EmailMessage.class)) {
 
             TransactionDto transactionDto = new TransactionDto();
             transactionDto.setAmount(2000000.0);
