@@ -8,4 +8,8 @@ public final class Withdrawal {
     static Double calculateWithdrawalFeeAmount(Double amount) {
         return amount * FIXED_WITHDRAWAL_FEE_PERCENT / 100;
     }
+
+    static Double getCurrentPercentageFeeAmount() {
+        return FIXED_WITHDRAWAL_FEE_PERCENT;
+    }
 }

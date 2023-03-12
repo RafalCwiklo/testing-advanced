@@ -14,4 +14,8 @@ public interface ClientRepository {
     Optional<Client> getClientDataByClientId(String clientId);
     List<Transaction> saveTransaction(Transaction transaction);
 
+    boolean testNiceMockBoolean();//
+    Integer testNiceMockInteger();//
+    Client testNiceObject();//
+
 }

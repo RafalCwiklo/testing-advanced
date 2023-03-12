@@ -112,4 +112,22 @@ public class InMemoryRepository implements ClientRepository {
         transactions.add(transaction);
         return transactions;
     }
+
+    @Override
+    public boolean testNiceMockBoolean() {
+        return true;
+    }
+
+    @Override
+    public Integer testNiceMockInteger() {
+        return 123;
+    }
+
+    @Override
+    public Client testNiceObject() {
+        return Client.builder()
+                .firstName("Adam")
+                .lastName("Małysz")
+                .build();
+    }
 }
