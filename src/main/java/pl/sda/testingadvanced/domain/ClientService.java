@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 public class ClientService {
     private final DateTimeProvider dateTimeProvider;
     private final ClientRepository clientRepository;
+    private final NotificationService notificationService;
 
     //checkBankBalance
     public Double checkBankBalance(String clientNumber) {
@@ -47,6 +48,10 @@ public class ClientService {
             Double bankBalance = clientData.getBankBalance();
 
             if (PaymentType.EXTERNAL.equals(transactionDto.getPaymentType())) {
+                if (bankBalance < transactionDto.getAmount()) {
+                    notificationService.sendSmsNotification();
+                    return ClientDto.toDto(clientData);
+                }
                 clientData.setBankBalance(bankBalance - transactionDto.getAmount());
             } else {
                 clientData.setBankBalance(bankBalance + transactionDto.getAmount());

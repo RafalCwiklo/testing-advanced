@@ -7,9 +7,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import pl.sda.testingadvanced.domain.model.dtos.ClientDto;
+import pl.sda.testingadvanced.domain.model.dtos.TransactionDto;
+import pl.sda.testingadvanced.domain.model.entity.Card;
 import pl.sda.testingadvanced.domain.model.entity.Client;
+import pl.sda.testingadvanced.domain.model.entity.PaymentType;
 import pl.sda.testingadvanced.repository.ClientRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
@@ -23,13 +28,16 @@ class ClientServiceTest {
     @Mock
     ClientRepository clientRepository;
     ClientRepository clientRepositoryWithStub = new RepositoryStub();
+    @Mock
+    NotificationService notificationServiceMock;
+    NotificationService notificationServiceStub;
 
 
     @BeforeEach
     void setUp() {
 
-        clientServiceWithMock = new ClientService(dateTimeProvider, clientRepository);
-        clientServiceWithStub = new ClientService(dateTimeProviderWithStub, clientRepositoryWithStub);
+        clientServiceWithMock = new ClientService(dateTimeProvider, clientRepository, notificationServiceMock);
+        clientServiceWithStub = new ClientService(dateTimeProviderWithStub, clientRepositoryWithStub, notificationServiceStub);
     }
 
     @Test
@@ -62,11 +70,33 @@ class ClientServiceTest {
     }
 
     @Test
-    void getAllActiveCards() {
+    void getAllActiveCardsWithStub() {
+        //given
+        //when
+        List<Card> activeCards = clientServiceWithStub.getAllActiveCards("CCC123");
+        //then
+        Assertions.assertEquals(2, activeCards.size());
     }
 
     @Test
     void handleTransaction() {
+        //given
+        Mockito.when(clientRepository.getClientDataByClientId("123"))
+                .thenReturn(Optional.of(Client.builder()
+                        .bankBalance(100.0)
+                        .build()));
+
+        TransactionDto transactionDto = new TransactionDto();
+        transactionDto.setAmount(200.0);
+        transactionDto.setClientNumber("123");
+        transactionDto.setPaymentType(PaymentType.EXTERNAL);
+
+        //when
+        ClientDto clientDto = clientServiceWithMock.handleTransaction(transactionDto);
+        //then
+        Mockito.verify(notificationServiceMock, Mockito.times(1)).sendSmsNotification();
+        Mockito.verifyNoMoreInteractions(notificationServiceMock);
+
     }
 
     @Test
