@@ -6,6 +6,7 @@ import pl.sda.testingadvanced.domain.model.dtos.ClientDto;
 import pl.sda.testingadvanced.domain.model.dtos.TransactionDto;
 import pl.sda.testingadvanced.domain.model.entity.Card;
 import pl.sda.testingadvanced.domain.model.entity.Client;
+import pl.sda.testingadvanced.domain.model.entity.EmailMessage;
 import pl.sda.testingadvanced.domain.model.entity.PaymentType;
 import pl.sda.testingadvanced.domain.model.entity.Transaction;
 import pl.sda.testingadvanced.exceptions.NoSuchClientException;
@@ -67,6 +68,11 @@ public class ClientService {
         if (client.isPresent()) {
             Client clientData = client.get();
             Double bankBalance = clientData.getBankBalance();
+
+            if (bankBalance < transactionDto.getAmount()) {
+                notificationService.sendEmailNotification(new EmailMessage("mail content"));
+                notificationService.sendLetter();
+            }
             Double withdrawalFee = Withdrawal.calculateWithdrawalFeeAmount(transactionDto.getAmount());
 
             clientData.setBankBalance(bankBalance - (transactionDto.getAmount() + withdrawalFee));

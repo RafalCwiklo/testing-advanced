@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -11,6 +12,7 @@ import pl.sda.testingadvanced.domain.model.dtos.ClientDto;
 import pl.sda.testingadvanced.domain.model.dtos.TransactionDto;
 import pl.sda.testingadvanced.domain.model.entity.Card;
 import pl.sda.testingadvanced.domain.model.entity.Client;
+import pl.sda.testingadvanced.domain.model.entity.EmailMessage;
 import pl.sda.testingadvanced.domain.model.entity.PaymentType;
 import pl.sda.testingadvanced.repository.ClientRepository;
 
@@ -87,16 +89,38 @@ class ClientServiceTest {
                         .build()));
 
         TransactionDto transactionDto = new TransactionDto();
-        transactionDto.setAmount(200.0);
+        transactionDto.setAmount(50.0);
         transactionDto.setClientNumber("123");
         transactionDto.setPaymentType(PaymentType.EXTERNAL);
 
         //when
         ClientDto clientDto = clientServiceWithMock.handleTransaction(transactionDto);
         //then
-        Mockito.verify(notificationServiceMock, Mockito.times(1)).sendSmsNotification();
+        Mockito.verify(notificationServiceMock, Mockito.times(0)).sendSmsNotification();
         Mockito.verifyNoMoreInteractions(notificationServiceMock);
 
+    }
+
+    @Test
+    void shouldSendEmailWithProperContent() {
+        //given
+        ArgumentCaptor<EmailMessage> captorDto = ArgumentCaptor.forClass(EmailMessage.class);
+
+        Mockito.when(clientRepository.getClientDataByClientId("123"))
+                .thenReturn(Optional.of(Client.builder()
+                        .bankBalance(100.0)
+                        .build()));
+
+        TransactionDto transactionDto = new TransactionDto();
+        transactionDto.setAmount(200.0);
+        transactionDto.setClientNumber("123");
+        transactionDto.setPaymentType(PaymentType.EXTERNAL);
+        //when
+        clientServiceWithMock.handleWithdrawal(transactionDto);
+
+        //then
+        Mockito.verify(notificationServiceMock).sendEmailNotification(captorDto.capture());
+        Assertions.assertEquals("mail content",captorDto.getValue().getMessage());
     }
 
     @Test
