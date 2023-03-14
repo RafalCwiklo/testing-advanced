@@ -6,11 +6,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.sda.testingadvanced.domain.model.dtos.ClientDto;
@@ -26,6 +28,8 @@ import pl.sda.testingadvanced.repository.ClientRepository;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
+
+import static org.mockito.Mockito.mockStatic;
 
 @ExtendWith(MockitoExtension.class)
 class ClientServiceTest {
@@ -51,11 +55,11 @@ class ClientServiceTest {
     }
 
     @Test
-    void checkBankBalanceWithMock() {
+    void checkBankBalanceWithMock(Double double1, Double double2) {
         //given
         Mockito.when(clientRepository.getClientDataByClientId("ABC123"))
                 .thenReturn(Optional.of(Client.builder()
-                        .bankBalance(100.0)
+                        .bankBalance(double1)
                         .build()));
 
 //        Mockito.when(clientRepository.getClientDataByClientId("ABC999"))
@@ -64,10 +68,24 @@ class ClientServiceTest {
 //                        .build()));
         //when
         Double bankBalance = clientServiceWithMock.checkBankBalance("ABC123");
-//        Double bankBalance2 = clientServiceWithMock.checkBankBalance("ABC999");
+        Double bankBalance2 = clientServiceWithMock.checkBankBalance("ABC999");
         //then
-        Assertions.assertEquals(100.0, bankBalance);
-//        Assertions.assertEquals(200.0, bankBalance2);
+        Assertions.assertEquals(double2, bankBalance);
+        Assertions.assertEquals(200.0, bankBalance2);
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(MyArgumentProvider.class)
+    void parametrizedCheckBankBalanceWithMock(Double double1, Double double2) {
+        //given
+        Mockito.when(clientRepository.getClientDataByClientId(Mockito.anyString()))
+                .thenReturn(Optional.of(Client.builder()
+                        .bankBalance(double1)
+                        .build()));
+        //when
+        Double bankBalance = clientServiceWithMock.checkBankBalance("ABC999");
+        //then
+        Assertions.assertEquals(double2, bankBalance);
     }
 
     @Test
@@ -192,5 +210,24 @@ class ClientServiceTest {
         //when and then
         Assertions.assertThrows(NoSuchClientException.class,
                 () -> clientServiceWithStub.getClientBasicData(input));
+    }
+
+    @Test
+    void checkMockedWithdrawalFee() {
+        //given
+        try (MockedStatic mockStatic = mockStatic(Withdrawal.class)) {
+
+            mockStatic.when(() -> Withdrawal.getCurrentPercentageFeeAmount()).thenReturn(5.0);
+            //when
+            Double feePercentage = Withdrawal.getCurrentPercentageFeeAmount();
+            //then
+            Assertions.assertEquals(5.0, feePercentage);
+        }
+
+        //when
+        Double feePercentageOutside = Withdrawal.getCurrentPercentageFeeAmount();
+        //then
+        Assertions.assertEquals(1.5, feePercentageOutside);
+
     }
 }
