@@ -4,6 +4,9 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -151,5 +154,22 @@ class ClientServiceTest {
         Assertions.assertThrows(NoSuchClientException.class,
                 () -> clientServiceWithStub.getClientBasicData("ABC123"));
 //                "Nie znaleziono klienta o takim identyfikatorze: [1]");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"SDA", "test", "123"})
+    void checkIfStringIsNotNull(String input) {
+        //given
+        //when and then
+        Assertions.assertNotNull(input);
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    void checkIfExceptionIsThrownWhenClientDoesntExist(String input) {
+        //given
+        //when and then
+        Assertions.assertThrows(NoSuchClientException.class,
+                () -> clientServiceWithStub.getClientBasicData(input));
     }
 }
