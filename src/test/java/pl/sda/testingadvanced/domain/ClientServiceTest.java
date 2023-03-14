@@ -14,6 +14,7 @@ import pl.sda.testingadvanced.domain.model.entity.Card;
 import pl.sda.testingadvanced.domain.model.entity.Client;
 import pl.sda.testingadvanced.domain.model.entity.EmailMessage;
 import pl.sda.testingadvanced.domain.model.entity.PaymentType;
+import pl.sda.testingadvanced.exceptions.NoSuchClientException;
 import pl.sda.testingadvanced.repository.ClientRepository;
 
 import java.util.List;
@@ -129,5 +130,10 @@ class ClientServiceTest {
 
     @Test
     void getClientBasicData() {
+        //given
+        //when //then
+        Assertions.assertThrows(NoSuchClientException.class,
+                () -> clientServiceWithStub.getClientBasicData("1"),
+                "Nie znaleziono klienta o takim identyfikatorze: [1]");
     }
 }
