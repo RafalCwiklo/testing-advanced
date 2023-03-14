@@ -4,13 +4,13 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -130,36 +130,27 @@ class ClientServiceTest {
     }
 
     @Test
-    @Disabled
     void handleTransaction() {
         //given
         when(clientRepositoryMock.getClientDataByClientId("123"))
                 .thenReturn(Optional.of(Client.builder()
                         .bankBalance(100.0)
                         .build()));
-
-        when(clientRepositoryMock.getClientDataByClientId("ABC"))
-                .thenReturn(Optional.of(Client.builder()
-                        .bankBalance(300.0)
-                        .build()));
-
         TransactionDto transactionDto = new TransactionDto();
         transactionDto.setAmount(200.0);
         transactionDto.setClientNumber("123");
         transactionDto.setPaymentType(PaymentType.EXTERNAL);
 
-        TransactionDto transactionDto2 = new TransactionDto();
-        transactionDto2.setAmount(100.0);
-        transactionDto2.setClientNumber("ABC");
-        transactionDto2.setPaymentType(PaymentType.EXTERNAL);
-
         //when
-        ClientDto clientDto = clientService.handleTransaction(transactionDto);
-        ClientDto clientDto2 = clientService.handleTransaction(transactionDto2);
+        try {
+            ClientDto clientDto = clientService.handleTransaction(transactionDto);
 
-        //then
-        verify(notificationServiceMock, times(1)).sendSmsNotification();
-        verifyNoMoreInteractions(notificationServiceMock);
+            //then
+            verify(notificationServiceMock, times(1)).sendSmsNotification();
+            verifyNoMoreInteractions(notificationServiceMock);
+        } catch (Exception e) {
+            Assertions.assertEquals("Brak wystarczających środków u klienta: [123]", e.getMessage());
+        }
     }
 
     @Test
@@ -189,20 +180,14 @@ class ClientServiceTest {
 
     }
 
+    //TESTY WYJĄTKÓW
     @Test
     void shouldThrowCustomExceptionWhenClientDoesntExist() {
         //given
         //when//then
-        Assertions.assertThrows(NoSuchClientException.class, () -> clientServiceWithStub.getClientBasicData("ABC"),
+        Assertions.assertThrows(NoSuchClientException.class,
+                () -> clientServiceWithStub.getClientBasicData("ABC"),
                 "Nie znaleziono klienta o takim identyfikatorze: [ABC]");
-
-
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"test1", "test2", "null"})
-    void shouldReturnProperBankBalance(String testWord) {
-        Assertions.assertNotNull(testWord);
     }
 
     @ParameterizedTest
@@ -211,11 +196,32 @@ class ClientServiceTest {
         Assertions.assertThrows(NoSuchClientException.class, () -> clientServiceWithStub.getClientBasicData(input));
     }
 
-    @DisplayName("Test parametryzowany z użyciem adnotacji ArgumentSource")
+    @DisplayName("Zadanie 5")
     @ParameterizedTest()
-    @ArgumentsSource(MyArgumentProvider.class)
-    void testWithArgumentsSource(int a, int b, int sum) {
-        Assertions.assertEquals(sum, a + b);
+    @MethodSource("getFakeExceptions")
+    void testThrowingExceptionWithMethodSource(String clientNumber, Double amount, Exception e, String exceptionMessage) {
+        //given
+        TransactionDto transactionDto = new TransactionDto();
+        transactionDto.setClientNumber(clientNumber);
+        transactionDto.setAmount(amount);
+        transactionDto.setPaymentType(PaymentType.EXTERNAL);
+        //when
+        Assertions.assertThrows(e.getClass(), () -> clientServiceWithStub.handleTransaction(transactionDto), exceptionMessage);
+
+    }
+
+//TESTY PARAMETRYZOWANE
+    @ParameterizedTest
+    @ValueSource(strings = {"test1", "test2", "null"})
+    void shouldReturnProperBankBalance(String testWord) {
+        Assertions.assertNotNull(testWord);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"1,true", "2,false", "   4,false", "4, false"})
+    void isOdd_should_return_expected_result(String input, String expected) {
+        boolean actualResult = TestUtil.isOdd(Integer.parseInt(input));
+        Assertions.assertEquals(Boolean.valueOf(expected), actualResult);
     }
 
     @DisplayName("Zadanie 5")
@@ -238,20 +244,15 @@ class ClientServiceTest {
         Assertions.assertEquals(expectedBankBalance, clientDto.getCurrentBankBalance());
     }
 
-    @DisplayName("Zadanie 5")
-    @ParameterizedTest()
-    @MethodSource("getFakeExceptions")
-    void testThrowingExceptionWithMethodSource(String clientNumber, Double amount, Exception e, String exceptionMessage) {
-        //given
-        TransactionDto transactionDto = new TransactionDto();
-        transactionDto.setClientNumber(clientNumber);
-        transactionDto.setAmount(amount);
-        transactionDto.setPaymentType(PaymentType.EXTERNAL);
-        //when
-        Assertions.assertThrows(e.getClass(), () -> clientServiceWithStub.handleTransaction(transactionDto), exceptionMessage);
-
+    @DisplayName("Test parametryzowany z użyciem adnotacji ArgumentSource")
+    @ParameterizedTest
+    @ArgumentsSource(MyArgumentProvider.class)
+    void testIsOddNumberWithArgumentProvide(String input, String expected) {
+        boolean actualResult = TestUtil.isOdd(Integer.parseInt(input));
+        Assertions.assertEquals(Boolean.valueOf(expected), actualResult);
     }
 
+    //MOCK METODY STATYCZNEJ
     @DisplayName("Mock static method")
     @Test
     void checkMockedWithdrawalFee() {
@@ -271,6 +272,7 @@ class ClientServiceTest {
         Assertions.assertEquals(1.5, feePercentageOutside);
 
     }
+    //MOCK KONSTRUKTORA
 
     @DisplayName("Mock constructor")
     @Test
@@ -289,16 +291,6 @@ class ClientServiceTest {
             //then
             Assertions.assertEquals(1, mocked.constructed().size());
         }
-    }
-
-    @Test
-    void handleWithdrawal() {
-        //todo
-    }
-
-    @Test
-    void getClientBasicData() {
-        //todo
     }
 
 

@@ -10,9 +10,9 @@ public class MyArgumentProvider implements ArgumentsProvider {
     @Override
     public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext) {
         return Stream.of(
-                Arguments.of(2, 6, 8),
-                Arguments.of(2, 1, 3),
-                Arguments.of(0, 0, 0)
-        );
+                Arguments.of("1", "true"),
+                Arguments.of("2", "false"),
+                Arguments.of("4", "false"),
+                Arguments.of("5", "true"));
     }
 }

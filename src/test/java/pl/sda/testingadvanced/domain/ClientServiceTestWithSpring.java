@@ -21,8 +21,8 @@ class ClientServiceTestWithSpring {
 
     @Autowired
     private DateTimeProvider dateTimeProvider;
-//    @Autowired
     @MockBean
+//    @Autowired
     private ClientRepository clientRepository;
     @Autowired
     private NotificationService notificationService;
@@ -68,19 +68,4 @@ class ClientServiceTestWithSpring {
         Assertions.assertEquals(100, bankBalance);
     }
 
-    @Test
-    void getAllActiveCards() {
-    }
-
-    @Test
-    void handleTransaction() {
-    }
-
-    @Test
-    void handleWithdrawal() {
-    }
-
-    @Test
-    void getClientBasicData() {
-    }
 }
