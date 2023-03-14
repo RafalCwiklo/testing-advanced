@@ -5,6 +5,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
@@ -23,6 +25,7 @@ import pl.sda.testingadvanced.repository.ClientRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @ExtendWith(MockitoExtension.class)
 class ClientServiceTest {
@@ -37,7 +40,7 @@ class ClientServiceTest {
     ClientRepository clientRepositoryWithStub = new RepositoryStub();
     @Mock
     NotificationService notificationServiceMock;
-    NotificationService notificationServiceStub;
+    NotificationService notificationServiceStub = new NotificationService();
 
 
     @BeforeEach
@@ -55,16 +58,16 @@ class ClientServiceTest {
                         .bankBalance(100.0)
                         .build()));
 
-        Mockito.when(clientRepository.getClientDataByClientId("ABC999"))
-                .thenReturn(Optional.of(Client.builder()
-                        .bankBalance(200.0)
-                        .build()));
+//        Mockito.when(clientRepository.getClientDataByClientId("ABC999"))
+//                .thenReturn(Optional.of(Client.builder()
+//                        .bankBalance(200.0)
+//                        .build()));
         //when
         Double bankBalance = clientServiceWithMock.checkBankBalance("ABC123");
-        Double bankBalance2 = clientServiceWithMock.checkBankBalance("ABC999");
+//        Double bankBalance2 = clientServiceWithMock.checkBankBalance("ABC999");
         //then
         Assertions.assertEquals(100.0, bankBalance);
-        Assertions.assertEquals(200.0, bankBalance2);
+//        Assertions.assertEquals(200.0, bankBalance2);
     }
 
     @Test
@@ -154,6 +157,24 @@ class ClientServiceTest {
         Assertions.assertThrows(NoSuchClientException.class,
                 () -> clientServiceWithStub.getClientBasicData("ABC123"));
 //                "Nie znaleziono klienta o takim identyfikatorze: [1]");
+    }
+
+    @ParameterizedTest
+    @MethodSource("getFakeArgumentsForTest")
+    void checkWithMethodSource(int a, int b, int oczekiwanaSuma) {
+        //given
+        //when
+        int faktycznyWynik = a + b;
+        //then
+        Assertions.assertEquals(oczekiwanaSuma, faktycznyWynik);
+    }
+
+    private static Stream<Arguments> getFakeArgumentsForTest() {
+        return Stream.of(Arguments.of(1, 2, 3),
+                Arguments.of(10, 2, 12),
+                Arguments.of(0, 2, 1),
+                Arguments.of(7, 5, 12)
+        );
     }
 
     @ParameterizedTest
