@@ -15,6 +15,7 @@ import pl.sda.testingadvanced.domain.model.entity.Client;
 import pl.sda.testingadvanced.domain.model.entity.EmailMessage;
 import pl.sda.testingadvanced.domain.model.entity.PaymentType;
 import pl.sda.testingadvanced.exceptions.NoSuchClientException;
+import pl.sda.testingadvanced.exceptions.NotEnoughResourcesException;
 import pl.sda.testingadvanced.repository.ClientRepository;
 
 import java.util.List;
@@ -126,6 +127,21 @@ class ClientServiceTest {
 
     @Test
     void handleWithdrawal() {
+        //given
+        Mockito.when(clientRepository.getClientDataByClientId(Mockito.anyString()))
+                .thenReturn(Optional.of(Client.builder()
+                                .bankBalance(100.0)
+                        .build()));
+
+        TransactionDto transactionDto = new TransactionDto();
+        transactionDto.setAmount(200.0);
+        transactionDto.setClientNumber("123");
+        transactionDto.setPaymentType(PaymentType.EXTERNAL);
+
+        //when
+        Assertions.assertThrows(NotEnoughResourcesException.class,
+                () -> clientServiceWithMock.handleWithdrawal(transactionDto));
+        //then
     }
 
     @Test
@@ -133,7 +149,7 @@ class ClientServiceTest {
         //given
         //when //then
         Assertions.assertThrows(NoSuchClientException.class,
-                () -> clientServiceWithStub.getClientBasicData("1"),
-                "Nie znaleziono klienta o takim identyfikatorze: [1]");
+                () -> clientServiceWithStub.getClientBasicData("ABC123"));
+//                "Nie znaleziono klienta o takim identyfikatorze: [1]");
     }
 }

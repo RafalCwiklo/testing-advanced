@@ -13,5 +13,4 @@ public interface ClientRepository {
     List<Transaction> getAllClientTransactionsByClientId(String clientId);
     Optional<Client> getClientDataByClientId(String clientId);
     List<Transaction> saveTransaction(Transaction transaction);
-
 }

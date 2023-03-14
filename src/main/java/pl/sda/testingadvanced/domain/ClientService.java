@@ -10,6 +10,7 @@ import pl.sda.testingadvanced.domain.model.entity.EmailMessage;
 import pl.sda.testingadvanced.domain.model.entity.PaymentType;
 import pl.sda.testingadvanced.domain.model.entity.Transaction;
 import pl.sda.testingadvanced.exceptions.NoSuchClientException;
+import pl.sda.testingadvanced.exceptions.NotEnoughResourcesException;
 import pl.sda.testingadvanced.repository.ClientRepository;
 
 import java.time.LocalDate;
@@ -72,6 +73,7 @@ public class ClientService {
             if (bankBalance < transactionDto.getAmount()) {
                 notificationService.sendEmailNotification(new EmailMessage("mail content"));
                 notificationService.sendLetter();
+                throw new NotEnoughResourcesException("Test message");
             }
             Double withdrawalFee = Withdrawal.calculateWithdrawalFeeAmount(transactionDto.getAmount());
 
